@@ -104,38 +104,36 @@ def play():
 
 @app.route('/matchmake', methods=['POST'])
 def matchmake():  # put application's code here
+    turnId = 1
 
     data = request.get_json(silent=True)
-    if data:
+    if not matches:
+        if data:
+            matchId = create_match(data['playerID'])
+        else:
+            matchId = create_match()
+
+    elif data:
         player_id = data.get('playerID')
         if not player_id or player_id not in player:
             return {
                 'error': 'Invalid player ID'
             }, 400
-        if matches:
-            for id in matches.keys():
-                if join_match(id, player_id):
-                    matchId = id
-                    return {
-                        'matchID': matchId,
-                        'turnID': 2,
-                        'playerID': matches[matchId]['player2']
-                    }
 
+        for id in matches.keys():
+            if join_match(id, player_id):
+                matchId = id
+                turnId =2
+                break
         else:
             matchId =create_match(player_id)
 
     else:
-        if matches:
-            for id in matches.keys():
-                if join_match(id):
-                    matchId = id
-                    return {
-                        'matchID': matchId,
-                        'turnID': 2,
-                        'playerID': matches[matchId]['player2']
-                    }
-
+        for id in matches.keys():
+            if join_match(id):
+                matchId = id
+                turnId = 2
+                break
         else:
             matchId = create_match()
 
@@ -143,8 +141,8 @@ def matchmake():  # put application's code here
 
     return {
         'matchID': matchId,
-        'turnID': 1,
-        'playerID': matches[matchId]['player1']
+        'turnID': turnId,
+        'playerID': matches[matchId]['player1' if turnId == 1 else 'player2']
     }
 
 
