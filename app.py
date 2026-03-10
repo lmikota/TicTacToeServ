@@ -1,4 +1,3 @@
-import json
 import random
 
 from flask import Flask, request
@@ -14,11 +13,11 @@ random.shuffle(available_numbers)
 @app.route('/create_account', methods=['POST'])
 def create_account():
 
-    obj = json.loads(request.get_json)
+    data = request.get_json()
 
     player_id = available_numbers.pop()
     player[player_id] = {
-        'name': obj['name']
+        'name': data['name']
     }
     return {
         'playerID': player_id,
@@ -37,7 +36,7 @@ def getstatus():
             'status': matches[match_id]['status'],
             'gameBoard': matches[match_id]['gameBoard']
         }
-    except KeyError, TypeError:
+    except (KeyError, TypeError):
         return {
             'error': 'bad request'
         }, 400
