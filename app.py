@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 player = {}
 matches = {}
-available_numbers = list(range(1000,9999))
+available_numbers = list(range(1000, 9999))
 random.shuffle(available_numbers)
 
 
@@ -14,46 +14,40 @@ random.shuffle(available_numbers)
 def create_account():
     data = request.get_json
 
-    if data:
-        player_id = available_numbers.pop()
-        player[player_id] = {
-            'name': data.get('name', 'Anonymous')
-        }
-        return {
-            'playerID': player_id,
-            'name': player[player_id]['name']
-        }
-
+    player_id = available_numbers.pop()
+    player[player_id] = {
+        'name': data.get('name', 'Anonymous')
+    }
+    return {
+        'playerID': player_id,
+        'name': player[player_id]['name']
+    }
 
 
 @app.route('/status', methods=['GET'])
 def getstatus():
     try:
-        match_id= int(request.args['matchid'])
+        match_id = int(request.args['matchid'])
         print(matches[match_id])
         return {
             'matchID': match_id,
             'status': matches[match_id]['status'],
             'gameBoard': matches[match_id]['gameBoard']
         }
-    except KeyError, TypeError:
+    except KeyError as TypeError:
         return {
             'error': 'bad request'
         }, 400
 
 
-
 @app.route('/play', methods=['GET'])
 def play():
-
     match_id = int(request.args['matchid'])
     player_id = int(request.args['playerid'])
     row = int(request.args['row'])
     column = int(request.args['column'])
 
-
     match = matches[match_id]
-
 
     if match['status'] == 'TurnPlayer1' and player_id == match['player1']:
         match['gameBoard'][int(row)][int(column)] = 1
@@ -75,12 +69,12 @@ def play():
     elif winnner == 3:
         match['status'] = 'Draw'
 
-
     return {
         'matchID': match_id,
         'status': matches[match_id]['status'],
         'gameBoard': matches[match_id]['gameBoard']
     }
+
 
 @app.route('/matchmake')
 def matchmake():  # put application's code here
@@ -95,9 +89,7 @@ def matchmake():  # put application's code here
                     'playerID': matches[matchId]['player2']
                 }
 
-
     matchId = create_match()
-
 
     print(matches)
 
@@ -109,17 +101,18 @@ def matchmake():  # put application's code here
 
 
 def create_match():
-    match_id = random.randint(100,999)
-    print('MatchID',match_id)
+    match_id = random.randint(100, 999)
+    print('MatchID', match_id)
     matches[match_id] = {
         'player1': available_numbers.pop(),
         'player2': None,
         'turnID': 1,
         'status': 'Waiting',
-        'gameBoard': [[0,0,0],[0,0,0],[0,0,0]]
+        'gameBoard': [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
 
     }
     return match_id
+
 
 def join_match(match_id):
     if match_id in matches and matches[match_id]['player2'] is None:
@@ -128,6 +121,7 @@ def join_match(match_id):
         print(matches[match_id])
         return True
     return False
+
 
 def check_win_condition(game_board):
     for row in game_board:
@@ -148,6 +142,7 @@ def check_win_condition(game_board):
         return 3  # Indicate a draw
 
     return None
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
