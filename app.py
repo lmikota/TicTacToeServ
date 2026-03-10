@@ -12,7 +12,7 @@ random.shuffle(available_numbers)
 
 @app.route('/create_account', methods=['POST'])
 def create_account():
-    data = request.get_json(silent=True)
+    data = request.get_json
 
     if data:
         player_id = available_numbers.pop()
