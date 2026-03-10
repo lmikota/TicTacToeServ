@@ -1,0 +1,252 @@
+openapi: 3.0.3
+info:
+  title: TicTacToe API
+  version: 1.0.0
+  description: |
+    Diese API stellt ein Backend für ein TicTacToe-Spiel bereit.
+    Spieler können Accounts erstellen, Matches finden, Spielzüge ausführen
+    und den Spielstatus abrufen.
+
+    Das Spiel wird vollständig serverseitig verwaltet. Jeder Match besitzt
+    ein 3x3 Spielfeld, zwei Spieler und einen aktuellen Status.
+
+servers:
+  - url: http://127.0.0.1:5001
+    description: Lokaler Entwicklungsserver
+
+paths:
+
+  /create_account:
+    post:
+      tags:
+        - Player
+      summary: Erstellt einen neuen Spieler
+      description: |
+        Erstellt einen neuen Spieleraccount mit einem Namen.
+        Der Server generiert automatisch eine zufällige playerID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  example: Max
+      responses:
+        "200":
+          description: Spieler erfolgreich erstellt
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  playerID:
+                    type: integer
+                    example: 1234
+                  name:
+                    type: string
+                    example: Max
+
+  /matchmake:
+    post:
+      tags:
+        - Match
+      summary: Match erstellen oder beitreten
+      description: |
+        Erstellt ein neues Match oder tritt einem bestehenden offenen Match bei.
+        Wenn eine playerID angegeben wird, nimmt dieser Spieler am Match teil.
+        Andernfalls wird automatisch ein neuer Spieler erzeugt.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                playerID:
+                  type: integer
+                  example: 1234
+      responses:
+        "200":
+          description: Match erfolgreich erstellt oder betreten
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  matchID:
+                    type: integer
+                    example: 101
+                  turnID:
+                    type: integer
+                    description: Gibt an welcher Spieler beginnt
+                    example: 1
+                  playerID:
+                    type: integer
+                    example: 1234
+        "400":
+          description: Ungültige Player-ID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Invalid player ID
+
+  /status:
+    get:
+      tags:
+        - Match
+      summary: Matchstatus abrufen
+      description: Gibt den aktuellen Status eines Spiels sowie das Spielfeld zurück.
+      parameters:
+        - in: query
+          name: matchid
+          required: true
+          description: ID des Matches
+          schema:
+            type: integer
+            example: 101
+      responses:
+        "200":
+          description: Matchstatus erfolgreich geladen
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  matchID:
+                    type: integer
+                    example: 101
+                  status:
+                    type: string
+                    example: TurnPlayer1
+                  gameBoard:
+                    type: array
+                    description: 3x3 Spielfeldmatrix
+                    items:
+                      type: array
+                      items:
+                        type: integer
+                    example:
+                      - [0, 0, 0]
+                      - [0, 1, 0]
+                      - [2, 0, 0]
+        "400":
+          description: Fehlerhafte Anfrage
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: bad request
+
+  /play:
+    get:
+      tags:
+        - Match
+      summary: Spielzug ausführen
+      description: |
+        Führt einen Spielzug aus. Der Spieler setzt sein Symbol
+        auf die angegebene Position des Spielfelds.
+      parameters:
+        - in: query
+          name: matchid
+          required: true
+          schema:
+            type: integer
+            example: 101
+
+        - in: query
+          name: playerid
+          required: true
+          schema:
+            type: integer
+            example: 1234
+
+        - in: query
+          name: row
+          required: true
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 2
+            example: 1
+
+        - in: query
+          name: column
+          required: true
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 2
+            example: 2
+
+      responses:
+        "200":
+          description: Zug erfolgreich ausgeführt
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  matchID:
+                    type: integer
+                    example: 101
+                  status:
+                    type: string
+                    example: TurnPlayer2
+                  gameBoard:
+                    type: array
+                    items:
+                      type: array
+                      items:
+                        type: integer
+                    example:
+                      - [0, 0, 0]
+                      - [0, 0, 1]
+                      - [2, 0, 0]
+
+        "400":
+          description: Ungültiger Spielzug
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Cell already occupied
+
+  /scoreboard:
+    get:
+      tags:
+        - Player
+      summary: Top 10 Spieler anzeigen
+      description: |
+        Gibt eine Rangliste der besten Spieler zurück.
+        Die Spieler werden nach ihrem Score sortiert.
+      responses:
+        "200":
+          description: Scoreboard erfolgreich geladen
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      example: Max
+                    score:
+                      type: integer
+                      example: 9
