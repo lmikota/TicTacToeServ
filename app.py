@@ -67,18 +67,19 @@ def play():
 
     match = matches[match_id]
 
-
-    if match['status'] == 'TurnPlayer1' and player_id == match['player1']:
-        match['gameBoard'][int(row)][int(column)] = 1
-        match['status'] = 'TurnPlayer2'
-    elif match['status'] == 'TurnPlayer2' and player_id == match['player2']:
-        match['gameBoard'][int(row)][int(column)] = 2
-        match['status'] = 'TurnPlayer1'
-
     if match['gameBoard'][row][column] != 0:
         return {
             'error': 'Cell already occupied'
         }, 400
+
+    if match['status'] == 'TurnPlayer1' and player_id == match['player1']:
+        match['gameBoard'][row][column] = 1
+        match['status'] = 'TurnPlayer2'
+    elif match['status'] == 'TurnPlayer2' and player_id == match['player2']:
+        match['gameBoard'][row][column] = 2
+        match['status'] = 'TurnPlayer1'
+
+
     winnner = check_win_condition(match['gameBoard'])
 
     if winnner == 1:
