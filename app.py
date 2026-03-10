@@ -1,6 +1,6 @@
 import random
 
-from flask import Flask, request
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
@@ -42,6 +42,19 @@ def getstatus():
         }, 400
 
 
+@app.route('/scoreboard', methods=['GET'])
+def get_scoreboard():
+
+
+    top_sorted_players = sorted(player.items(), key=lambda x: x[1].get('score', 0), reverse=True)[:10]
+
+    scoreboard ={}
+
+    for nr,p in enumerate(top_sorted_players,start=1):
+        scoreboard[str(nr)] = {'name':p['name'], 'score': p.get('score', 0)}
+
+    return scoreboard
+
 
 @app.route('/play', methods=['GET'])
 def play():
@@ -69,11 +82,18 @@ def play():
     winnner = check_win_condition(match['gameBoard'])
 
     if winnner == 1:
+        if player_id == match['player1']:
+            player[player_id]['score'] = player.get(player_id, {}).get('score', 0) + 3
+
         match['status'] = 'WinPlayer1'
     elif winnner == 2:
+        if player_id == match['player2']:
+            player[player_id]['score'] = player.get(player_id, {}).get('score', 0) + 3
         match['status'] = 'WinPlayer2'
     elif winnner == 3:
+        player[player_id]['score'] = player.get(player_id, {}).get('score', 0) + 1
         match['status'] = 'Draw'
+
 
 
     return {
@@ -104,7 +124,6 @@ def matchmake():  # put application's code here
 
         else:
             matchId =create_match(player_id)
-
 
     else:
         if matches:
