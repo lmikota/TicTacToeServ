@@ -1,3 +1,4 @@
+import json
 import random
 
 from flask import Flask, request
@@ -12,17 +13,17 @@ random.shuffle(available_numbers)
 
 @app.route('/create_account', methods=['POST'])
 def create_account():
-    data = request.get_json
 
-    if data:
-        player_id = available_numbers.pop()
-        player[player_id] = {
-            'name': data.get('name', 'Anonymous')
-        }
-        return {
-            'playerID': player_id,
-            'name': player[player_id]['name']
-        }
+    obj = json.loads(request.get_json)
+
+    player_id = available_numbers.pop()
+    player[player_id] = {
+        'name': obj['name']
+    }
+    return {
+        'playerID': player_id,
+        'name': player[player_id]['name']
+    }
 
 
 
@@ -82,24 +83,45 @@ def play():
         'gameBoard': matches[match_id]['gameBoard']
     }
 
-@app.route('/matchmake')
+@app.route('/matchmake', methods=['POST'])
 def matchmake():  # put application's code here
 
-    if matches:
-        for id in matches.keys():
-            if join_match(id):
-                matchId = id
-                return {
-                    'matchID': matchId,
-                    'turnID': 2,
-                    'playerID': matches[matchId]['player2']
-                }
+    data = request.get_json(silent=True)
+    if data:
+        player_id = data.get('playerID')
+        if not player_id or player_id not in player:
+            return {
+                'error': 'Invalid player ID'
+            }, 400
+        if matches:
+            for id in matches.keys():
+                if join_match(id, player_id):
+                    matchId = id
+                    return {
+                        'matchID': matchId,
+                        'turnID': 2,
+                        'playerID': matches[matchId]['player2']
+                    }
+
+        else:
+            matchId =create_match(player_id)
 
 
-    matchId = create_match()
+    else:
+        if matches:
+            for id in matches.keys():
+                if join_match(id):
+                    matchId = id
+                    return {
+                        'matchID': matchId,
+                        'turnID': 2,
+                        'playerID': matches[matchId]['player2']
+                    }
+
+        else:
+            matchId = create_match()
 
 
-    print(matches)
 
     return {
         'matchID': matchId,
@@ -108,11 +130,16 @@ def matchmake():  # put application's code here
     }
 
 
-def create_match():
+def create_match(player_id=None):
     match_id = random.randint(100,999)
     print('MatchID',match_id)
+
+    if player_id:
+        player1 = player_id
+    else:
+        player1 = available_numbers.pop()
     matches[match_id] = {
-        'player1': available_numbers.pop(),
+        'player1': player1,
         'player2': None,
         'turnID': 1,
         'status': 'Waiting',
@@ -121,9 +148,12 @@ def create_match():
     }
     return match_id
 
-def join_match(match_id):
+def join_match(match_id, player_id=None):
     if match_id in matches and matches[match_id]['player2'] is None:
-        matches[match_id]['player2'] = available_numbers.pop()
+        if player_id:
+            matches[match_id]['player2'] = player_id
+        else:
+            matches[match_id]['player2'] = available_numbers.pop()
         matches[match_id]['status'] = 'TurnPlayer1'
         print(matches[match_id])
         return True
