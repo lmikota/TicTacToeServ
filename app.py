@@ -4,9 +4,26 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
+player = {}
 matches = {}
 available_numbers = list(range(1000,9999))
 random.shuffle(available_numbers)
+
+
+@app.route('/create_account', methods=['POST'])
+def create_account():
+    data = request.get_json(silent=True)
+
+    if data:
+        player_id = available_numbers.pop()
+        player[player_id] = {
+            'name': data.get('name', 'Anonymous')
+        }
+        return {
+            'playerID': player_id,
+            'name': player[player_id]['name']
+        }
+
 
 
 @app.route('/status', methods=['GET'])
